@@ -20,6 +20,7 @@ package org.apache.hadoop.tools;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
 
@@ -63,7 +64,11 @@ public class RegexCopyFilter extends CopyFilter {
   public void initialize() {
     BufferedReader reader = null;
     try {
-      InputStream is = new FileInputStream(filtersFile);
+      Configuration conf = getConf();
+      System.out.println("configured filesystem = " + conf.get(FS_PARAM_NAME));
+      FileSystem fs = FileSystem.get(conf);
+      InputStream is = fs.open(filtersFile);
+
       reader = new BufferedReader(new InputStreamReader(is,
           Charset.forName("UTF-8")));
       String line;
@@ -94,11 +99,16 @@ public class RegexCopyFilter extends CopyFilter {
 
   @Override
   public boolean shouldCopy(Path path) {
+    if (filters.isEmpty()) {
+      return true;
+    }
+
     for (Pattern filter : filters) {
       if (filter.matcher(path.toString()).matches()) {
-        return false;
+        return true;
       }
     }
-    return true;
+
+    return false;
   }
 }
