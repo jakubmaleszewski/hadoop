@@ -20,6 +20,8 @@ package org.apache.hadoop.tools;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
@@ -45,16 +47,17 @@ import com.google.common.annotations.VisibleForTesting;
 public class RegexCopyFilter extends CopyFilter {
 
   private static final Log LOG = LogFactory.getLog(RegexCopyFilter.class);
-  private File filtersFile;
+  private Path filtersPath;
   private List<Pattern> filters;
 
   /**
    * Constructor, sets up a File object to read filter patterns from and
    * the List to store the patterns.
    */
-  protected RegexCopyFilter(String filtersFilename) {
-    filtersFile = new File(filtersFilename);
+  protected RegexCopyFilter(Configuration conf, String filtersFilename) {
+    filtersPath = new Path(filtersFilename);
     filters = new ArrayList<>();
+    setConf(conf);
   }
 
   /**
@@ -65,9 +68,8 @@ public class RegexCopyFilter extends CopyFilter {
     BufferedReader reader = null;
     try {
       Configuration conf = getConf();
-      System.out.println("configured filesystem = " + conf.get(FS_PARAM_NAME));
       FileSystem fs = FileSystem.get(conf);
-      InputStream is = fs.open(filtersFile);
+      InputStream is = fs.open(filtersPath);
 
       reader = new BufferedReader(new InputStreamReader(is,
           Charset.forName("UTF-8")));
@@ -77,10 +79,10 @@ public class RegexCopyFilter extends CopyFilter {
         filters.add(pattern);
       }
     } catch (FileNotFoundException notFound) {
-      LOG.error("Can't find filters file " + filtersFile);
+      LOG.error("Can't find filters file " + filtersPath);
     } catch (IOException cantRead) {
       LOG.error("An error occurred while attempting to read from " +
-          filtersFile);
+          filtersPath);
     } finally {
       IOUtils.cleanup(LOG, reader);
     }

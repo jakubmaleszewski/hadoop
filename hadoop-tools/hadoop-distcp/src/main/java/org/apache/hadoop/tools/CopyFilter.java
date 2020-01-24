@@ -18,13 +18,14 @@
 package org.apache.hadoop.tools;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 
 /**
  * Interface for excluding files from DistCp.
  *
  */
-public abstract class CopyFilter {
+public abstract class CopyFilter extends Configured {
 
   /**
    * Default initialize method does nothing.
@@ -54,7 +55,7 @@ public abstract class CopyFilter {
     } else {
       String filterFilename = conf.get(
           DistCpConstants.CONF_LABEL_FILTERS_FILE);
-      return new RegexCopyFilter(filterFilename);
+      return new RegexCopyFilter(conf, filterFilename);
     }
   }
 }
